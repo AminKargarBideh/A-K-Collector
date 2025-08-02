@@ -325,3 +325,5 @@ PsiphonVPNs
 VPNGOD2024  
 FreeVPN2023_M  
 WingsVPN
+PewezaVPN
+sinavm
