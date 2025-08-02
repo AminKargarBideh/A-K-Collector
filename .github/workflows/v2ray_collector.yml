@@ -4,7 +4,7 @@ name: V2Ray Config Collector & Validator
 on:
   workflow_dispatch:
   schedule:
-    - cron: '5 * * * *'
+    - cron: '0 */6 * * *'
   push:
     branches:
       - main
@@ -38,31 +38,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 5. Manually Install Xray-core
-        run: |
-          echo "Setting up temporary directory for Xray-core..."
-          mkdir xray_temp
-          
-          echo "Downloading Xray-core..."
-          XRAY_VERSION="1.8.10"
-          ASSET_URL="https://github.com/XTLS/Xray-core/releases/download/v${XRAY_VERSION}/Xray-linux-64.zip"
-          curl -L -o xray.zip "${ASSET_URL}"
-          
-          echo "Unzipping Xray-core into temporary directory..."
-          # Use -d to specify the output directory. This prevents file conflicts.
-          unzip -d xray_temp xray.zip
-          
-          echo "Installing Xray-core binary to /usr/local/bin..."
-          # Move only the executable from the temp directory to a system path
-          sudo mv xray_temp/xray /usr/local/bin/xray
-          sudo chmod +x /usr/local/bin/xray
-          
-          echo "Cleaning up..."
-          rm xray.zip
-          rm -r xray_temp
-          
-          echo "Xray-core installed successfully:"
-          xray --version
 
       - name: 6. Run the Collector and Validator Script
         run: |
