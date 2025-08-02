@@ -142,20 +142,29 @@
            }
 
            function populateDropdowns(configs) {
-               const countries = [...new Set(configs.map(c => c.country_name))].sort();
-               const protocols = [...new Set(configs.map(c => c.protocol))].sort();
-
+               const countryCounts = configs.reduce((acc, c) => {
+                   acc[c.country_name] = (acc[c.country_name] || 0) + 1;
+                   return acc;
+               }, {});
+               const countries = Object.keys(countryCounts).sort();
+               
+               const protocolCounts = configs.reduce((acc, c) => {
+                   acc[c.protocol] = (acc[c.protocol] || 0) + 1;
+                   return acc;
+               }, {});
+               const protocols = Object.keys(protocolCounts).sort();
+ 
                countries.forEach(country => {
                    const option = document.createElement('option');
                    option.value = country;
-                   option.textContent = country;
+                   option.textContent = `${country} (${countryCounts[country]})`;
                    countrySelect.appendChild(option);
                });
-
+ 
                protocols.forEach(protocol => {
                    const option = document.createElement('option');
                    option.value = protocol;
-                   option.textContent = protocol;
+                   option.textContent = `${protocol} (${protocolCounts[protocol]})`;
                    protocolSelect.appendChild(option);
                });
            }
