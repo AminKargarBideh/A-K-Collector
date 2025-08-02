@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2Ray Config Dashboard</title>
+    <meta name="description" content="A live dashboard of validated V2Ray configurations.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { padding: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card {
+            background-color: var(--card-background-color);
+            border: var(--card-border);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #search { margin-bottom: 1rem; }
+        td button { margin: 0; padding: 0.2rem 0.5rem; }
+        .copied-feedback { color: var(--pico-color-green-400); font-weight: bold; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        #subscription-link { font-size: 1.1rem; }
+        #configsTable tbody tr:hover {
+            background-color: var(--card-background-color);
+        }
+        h2 { text-align: center; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1 style="text-align: center;">🚀 V2Ray Config Dashboard</h1>
+            <p style="text-align: center;">Live, validated, and enriched V2Ray configurations.</p>
+           <label style="position: absolute; top: 1rem; right: 1rem;">
+               <input type="checkbox" id="theme-toggle" role="switch">
+               Dark Mode
+           </label>
+        </header>
+
+        <section id="stats" class="grid"></section>
+        
+        <div class="grid">
+            <article class="card">
+                <h2>🌍 Configs by Country</h2>
+                <div class="chart-container"><canvas id="countryChart"></canvas></div>
+            </article>
+            <article class="card">
+                <h2>📊 Configs by Protocol</h2>
+                <div class="chart-container"><canvas id="protocolChart"></canvas></div>
+            </article>
+            <article class="card">
+               <h2>📢 Channel Statistics</h2>
+               <div style="overflow-x: auto; height: 300px;">
+                   <table id="channelStatsTable">
+                       <thead>
+                           <tr><th>Channel</th><th>Extracted Configs</th></tr>
+                       </thead>
+                       <tbody></tbody>
+                   </table>
+               </div>
+           </article>
+        </div>
+
+        <article>
+            <header>
+                <h2>Filter Configurations</h2>
+                <div class="grid">
+                    <select id="country-select">
+                        <option value="">Select a Country</option>
+                    </select>
+                    <select id="protocol-select">
+                        <option value="">Select a Protocol</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="subscription-container" style="display: none; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--pico-color-green-500); border-radius: var(--border-radius);">
+                <h4 id="subscription-title"></h4>
+                <code id="subscription-link"></code>
+                <button id="copy-subscription-btn" style="margin-top: 0.5rem;">Copy Link</button>
+            </div>
+
+            <div id="configs-container" style="display: none;">
+                <h2>Available Configurations</h2>
+                <div style="overflow-x: auto;">
+                    <table id="configsTable">
+                        <thead>
+                            <tr><th>Name</th><th>Protocol</th><th>Country</th><th>ISP</th><th>Action</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer>
+                <p>Last updated: <span id="lastUpdated"></span></p>
+            </footer>
+        </article>
+
+    </main>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- FIX: Ensure all constants are declared at the top ---
+            const API_URL = './validated_configs/results.json';
+            const configsTableBody = document.querySelector('#configsTable tbody');
+           const statsContainer = document.getElementById('stats');
+           const lastUpdatedSpan = document.getElementById('lastUpdated');
+           const countrySelect = document.getElementById('country-select');
+           const protocolSelect = document.getElementById('protocol-select');
+           const subscriptionContainer = document.getElementById('subscription-container');
+           const subscriptionTitle = document.getElementById('subscription-title');
+           const subscriptionLinkElem = document.getElementById('subscription-link');
+           const copySubscriptionBtn = document.getElementById('copy-subscription-btn');
+           const configsContainer = document.getElementById('configs-container');
+           const channelStatsTableBody = document.querySelector('#channelStatsTable tbody');
+
+           let allConfigs = [];
+           let countryChart, protocolChart;
+
+           async function fetchData() {
+               try {
+                   const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
+                   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                   const data = await response.json();
+                   
+                   allConfigs = data;
+                   console.log('Fetched data:', allConfigs); // Debugging line
+                   
+                   const fileDate = new Date(response.headers.get("last-modified"));
+                   lastUpdatedSpan.textContent = fileDate.toLocaleString();
+                   
+                   populateDropdowns(allConfigs);
+                   renderStats(allConfigs);
+                   renderCharts(allConfigs);
+                   renderChannelStats(allConfigs);
+               } catch (error) {
+                   console.error("Failed to fetch config data:", error);
+               }
+           }
+
+           function populateDropdowns(configs) {
+               const countries = [...new Set(configs.map(c => c.country_name))].sort();
+               const protocols = [...new Set(configs.map(c => c.protocol))].sort();
+
+               countries.forEach(country => {
+                   const option = document.createElement('option');
+                   option.value = country;
+                   option.textContent = country;
+                   countrySelect.appendChild(option);
+               });
+
+               protocols.forEach(protocol => {
+                   const option = document.createElement('option');
+                   option.value = protocol;
+                   option.textContent = protocol;
+                   protocolSelect.appendChild(option);
+               });
+           }
+
+           function handleFilterChange() {
+               const selectedCountry = countrySelect.value;
+               const selectedProtocol = protocolSelect.value;
+
+               if (!selectedCountry && !selectedProtocol) {
+                   subscriptionContainer.style.display = 'none';
+                   configsContainer.style.display = 'none';
+                   return;
+               }
+
+               let filteredConfigs = allConfigs;
+               let title = 'Subscription Link for';
+               let subLink = '';
+
+               if (selectedCountry) {
+                   filteredConfigs = filteredConfigs.filter(c => c.country_name === selectedCountry);
+                   title += ` ${selectedCountry}`;
+                   const countryCode = allConfigs.find(c => c.country_name === selectedCountry)?.country_code;
+                   if (countryCode) {
+                       subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/by-country/${countryCode}.txt`;
+                   }
+               }
+
+               if (selectedProtocol) {
+                   filteredConfigs = filteredConfigs.filter(c => c.protocol === selectedProtocol);
+                   title += ` ${selectedProtocol}`;
+                    if (!selectedCountry) { // Only protocol is selected
+                       subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/${selectedProtocol}.txt`;
+                   }
+               }
+
+               subscriptionTitle.textContent = title;
+               subscriptionLinkElem.textContent = subLink;
+               subscriptionContainer.style.display = 'block';
+
+               renderTable(filteredConfigs);
+               configsContainer.style.display = 'block';
+           }
+
+           function renderTable(configs) {
+               configsTableBody.innerHTML = '';
+               if (configs.length === 0) {
+                   configsTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No matching configurations found.</td></tr>`;
+                   return;
+               }
+               configs.forEach(config => {
+                   const row = document.createElement('tr');
+                   const displayName = config.display_name || config.name;
+                   const configToCopy = config.renamed_config || config.config;
+                   
+                   row.innerHTML = `
+                       <td>${displayName}</td>
+                       <td>${config.protocol}</td>
+                       <td>${config.country_name}</td>
+                       <td>${config.isp}</td>
+                       <td><button class="copy-btn" data-config="${configToCopy}">Copy Config</button></td>
+                   `;
+                   configsTableBody.appendChild(row);
+               });
+           }
+
+           // Event Listeners
+           countrySelect.addEventListener('change', handleFilterChange);
+           protocolSelect.addEventListener('change', handleFilterChange);
+
+           copySubscriptionBtn.addEventListener('click', () => {
+               navigator.clipboard.writeText(subscriptionLinkElem.textContent).then(() => {
+                   const originalText = copySubscriptionBtn.textContent;
+                   copySubscriptionBtn.textContent = 'Copied!';
+                   setTimeout(() => { copySubscriptionBtn.textContent = originalText; }, 2000);
+               });
+           });
+
+           configsTableBody.addEventListener('click', e => {
+               if (e.target.classList.contains('copy-btn')) {
+                   const button = e.target;
+                   const configStr = button.dataset.config;
+                   navigator.clipboard.writeText(configStr).then(() => {
+                       button.textContent = 'Copied!';
+                       setTimeout(() => { button.textContent = 'Copy Config'; }, 2000);
+                   });
+               }
+           });
+
+           const themeToggle = document.getElementById('theme-toggle');
+           
+           function setTheme(isDark) {
+               document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+               themeToggle.checked = isDark;
+           }
+
+           themeToggle.addEventListener('change', () => {
+               setTheme(themeToggle.checked);
+           });
+
+           // Set initial theme based on system preference
+           const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+           setTheme(prefersDark);
+
+            // Chart and Stat rendering functions
+            function renderStats(configs) {
+                const totalConfigs = configs.length;
+                const countries = new Set(configs.map(c => c.country_name)).size;
+                const protocols = new Set(configs.map(c => c.protocol)).size;
+                statsContainer.innerHTML = `<div class="card"><h3>Total Valid Configs</h3><p style="font-size: 2rem; margin:0;">${totalConfigs}</p></div><div class="card"><h3>Countries</h3><p style="font-size: 2rem; margin:0;">${countries}</p></div><div class="card"><h3>Protocols</h3><p style="font-size: 2rem; margin:0;">${protocols}</p></div>`;
+            }
+
+            function renderCharts(configs) {
+                const processChartData = (data, topN = 10) => {
+                    const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a);
+                    const labels = [], values = [];
+                    const topItems = sortedData.slice(0, topN);
+                    topItems.forEach(([label, value]) => { labels.push(label); values.push(value); });
+                    if (sortedData.length > topN) {
+                        const otherItems = sortedData.slice(topN);
+                        const otherValue = otherItems.reduce((sum, [, value]) => sum + value, 0);
+                        labels.push("Other");
+                        values.push(otherValue);
+                    }
+                    return { labels, values };
+                };
+                const countryData = configs.reduce((acc, c) => {
+                    const country = c.country_name || "Unknown";
+                    acc[country] = (acc[country] || 0) + 1;
+                    return acc;
+                }, {});
+                const processedCountryData = processChartData(countryData, 9);
+                if (countryChart) countryChart.destroy();
+                countryChart = new Chart(document.getElementById('countryChart'), { type: 'bar', data: { labels: processedCountryData.labels, datasets: [{ label: 'Configs', data: processedCountryData.values }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                const protocolData = configs.reduce((acc, c) => { acc[c.protocol] = (acc[c.protocol] || 0) + 1; return acc; }, {});
+                const processedProtocolData = { labels: Object.keys(protocolData), values: Object.values(protocolData) };
+                if (protocolChart) protocolChart.destroy();
+                protocolChart = new Chart(document.getElementById('protocolChart'), { type: 'pie', data: { labels: processedProtocolData.labels, datasets: [{ data: processedProtocolData.values }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
+            }
+
+           function renderChannelStats(configs) {
+               const channelStats = configs.reduce((acc, config) => {
+                   const channel = config.channel || "Unknown";
+                   acc[channel] = (acc[channel] || 0) + 1;
+                   return acc;
+               }, {});
+
+               const sortedChannels = Object.entries(channelStats).sort(([, a], [, b]) => b - a);
+
+               channelStatsTableBody.innerHTML = '';
+               sortedChannels.forEach(([channel, count]) => {
+                   const row = document.createElement('tr');
+                   row.innerHTML = `
+                       <td><a href="https://t.me/s/${channel}" target="_blank">${channel}</a></td>
+                       <td>${count}</td>
+                   `;
+                   channelStatsTableBody.appendChild(row);
+               });
+           }
+
+            // Initial fetch
+            fetchData();
+        });
+    </script>
+</body>
+</html>
+
