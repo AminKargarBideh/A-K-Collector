@@ -1,0 +1,121 @@
+# .github/workflows/v2ray_collector.yml
+name: V2Ray Config Collector & Validator
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 * * * *'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  collect-and-validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 3. Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: 4. Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 5. Manually Install Xray-core
+        run: |
+          echo "Setting up temporary directory for Xray-core..."
+          mkdir xray_temp
+          
+          echo "Downloading Xray-core..."
+          XRAY_VERSION="1.8.10"
+          ASSET_URL="https://github.com/XTLS/Xray-core/releases/download/v${XRAY_VERSION}/Xray-linux-64.zip"
+          curl -L -o xray.zip "${ASSET_URL}"
+          
+          echo "Unzipping Xray-core into temporary directory..."
+          # Use -d to specify the output directory. This prevents file conflicts.
+          unzip -d xray_temp xray.zip
+          
+          echo "Installing Xray-core binary to /usr/local/bin..."
+          # Move only the executable from the temp directory to a system path
+          sudo mv xray_temp/xray /usr/local/bin/xray
+          sudo chmod +x /usr/local/bin/xray
+          
+          echo "Cleaning up..."
+          rm xray.zip
+          rm -r xray_temp
+          
+          echo "Xray-core installed successfully:"
+          xray --version
+
+      - name: 6. Run the Collector and Validator Script
+        run: |
+          python v2ray_collector3.py
+
+      - name: 7. Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Use git stash to temporarily save any untracked or modified files
+          # that might interfere with the pull operation. This is the most robust way.
+          git stash push -m "v2raycollector-temp"
+          
+          # Now, pull the latest changes from the remote into a clean working directory.
+          git pull --rebase
+          
+          # Re-apply the stashed changes (our newly generated files) on top.
+          # We expect no conflicts, so we can use `pop`. If there's a stash, pop it.
+          if git stash list | grep -q "v2raycollector-temp"; then
+            git stash pop
+          fi
+          
+          # Now, add all new/modified files.
+          git add -A
+          
+          # Check if there are any staged changes to commit.
+          if ! git diff --staged --quiet; then
+            echo "Changes found. Committing and pushing..."
+            
+            git commit -m "📊 Automated Config Update: $(date -u)"
+            
+            # Push the new commit. Retry loop for robustness.
+            for i in 1 2 3; do
+              echo "Attempt #$i to push..."
+              if git push; then
+                echo "Push successful on attempt #$i."
+                exit 0 # Exit successfully
+              fi
+              
+              echo "Push failed on attempt #$i. Retrying after a short delay..."
+              # Re-sync with remote before next attempt, using the stash-pull-pop pattern again
+              git stash push -m "v2raycollector-temp-retry"
+              git pull --rebase
+              if git stash list | grep -q "v2raycollector-temp-retry"; then
+                git stash pop
+              fi
+              sleep 5
+            done
+            
+            echo "::error::Failed to push changes after multiple attempts."
+            exit 1
+
+          else
+            echo "No changes detected. Nothing to commit."
+          fi
