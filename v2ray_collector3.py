@@ -378,6 +378,29 @@ def save_results(results: List[ValidatedConfig]):
             f.write(encoded_country_configs)
         logging.info(f"Saved {len(configs)} configs for country {country_code} to {country_file_path}")
 
+    # --- 4. Group by Channel and save subscription files ---
+    channel_sub_dir = VALIDATED_DIR / "by-channel"
+    channel_sub_dir.mkdir(exist_ok=True)
+    
+    grouped_by_channel: Dict[str, List[str]] = {}
+    for res in results:
+        channel = res.get("channel", "Unknown")
+        if channel not in grouped_by_channel:
+            grouped_by_channel[channel] = []
+        renamed_config = res.get("renamed_config", res["config"])
+        grouped_by_channel[channel].append(renamed_config)
+
+    # Save individual channel subscription files
+    for channel, configs in grouped_by_channel.items():
+        if channel == "Unknown" or not configs:
+            continue
+
+        channel_file_path = channel_sub_dir / f"{channel}.txt"
+        encoded_channel_configs = base64.b64encode("\n".join(configs).encode("utf-8")).decode("utf-8")
+        with open(channel_file_path, "w", encoding="utf-8") as f:
+            f.write(encoded_channel_configs)
+        logging.info(f"Saved {len(configs)} configs for channel {channel} to {channel_file_path}")
+
 
 # ===== INITIALIZATION & STARTUP =====
 def main():

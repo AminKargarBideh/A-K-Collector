@@ -26,6 +26,24 @@
             background-color: var(--card-background-color);
         }
         h2 { text-align: center; }
+        
+        /* New styles for the subscription link container using CSS Grid */
+        .sub-container {
+            display: grid;
+            grid-template-columns: 1fr auto; /* Link takes all space, button takes auto space */
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .sub-container code {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sub-container button {
+            margin: 0;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8em;
+        }
     </style>
 </head>
 <body>
@@ -50,18 +68,20 @@
                 <h2>📊 Configs by Protocol</h2>
                 <div class="chart-container"><canvas id="protocolChart"></canvas></div>
             </article>
-            <article class="card">
-               <h2>📢 Channel Statistics</h2>
-               <div style="overflow-x: auto; height: 300px;">
-                   <table id="channelStatsTable">
-                       <thead>
-                           <tr><th>Channel</th><th>Extracted Configs</th></tr>
-                       </thead>
-                       <tbody></tbody>
-                   </table>
-               </div>
-           </article>
         </div>
+        <article>
+           <header>
+                <h2>📢 Channel Statistics</h2>
+           </header>
+           <div style="overflow: auto; height: 250px;">
+               <table id="channelStatsTable">
+                   <thead>
+                       <tr><th>Channel</th><th>Extracted Configs</th><th>Subscription</th></tr>
+                   </thead>
+                   <tbody></tbody>
+               </table>
+           </div>
+       </article>
 
         <article>
             <header>
@@ -76,10 +96,12 @@
                 </div>
             </header>
 
-            <div id="subscription-container" style="display: none; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--pico-color-green-500); border-radius: var(--border-radius);">
-                <h4 id="subscription-title"></h4>
-                <code id="subscription-link"></code>
-                <button id="copy-subscription-btn" style="margin-top: 0.5rem;">Copy Link</button>
+            <div id="subscription-container" style="display: none; margin-bottom: 1rem;">
+                <h4 id="subscription-title" style="margin-bottom: 0.5rem;"></h4>
+                <div class="sub-container">
+                    <code id="subscription-link"></code>
+                    <button id="copy-subscription-btn" class="outline">Copy</button>
+                </div>
             </div>
 
             <div id="configs-container" style="display: none;">
@@ -103,7 +125,6 @@
 
         <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- FIX: Ensure all constants are declared at the top ---
             const API_URL = './validated_configs/results.json';
             const configsTableBody = document.querySelector('#configsTable tbody');
            const statsContainer = document.getElementById('stats');
@@ -127,7 +148,6 @@
                    const data = await response.json();
                    
                    allConfigs = data;
-                   console.log('Fetched data:', allConfigs); // Debugging line
                    
                    const fileDate = new Date(response.headers.get("last-modified"));
                    lastUpdatedSpan.textContent = fileDate.toLocaleString();
@@ -211,7 +231,7 @@
            function renderTable(configs) {
                configsTableBody.innerHTML = '';
                if (configs.length === 0) {
-                   configsTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No matching configurations found.</td></tr>`;
+                   configsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No matching configurations found.</td></tr>`;
                    return;
                }
                configs.forEach(config => {
@@ -238,8 +258,19 @@
                navigator.clipboard.writeText(subscriptionLinkElem.textContent).then(() => {
                    const originalText = copySubscriptionBtn.textContent;
                    copySubscriptionBtn.textContent = 'Copied!';
-                   setTimeout(() => { copySubscriptionBtn.textContent = originalText; }, 2000);
+                   setTimeout(() => { copySubscriptionBtn.textContent = 'Copy'; }, 2000);
                });
+           });
+
+           channelStatsTableBody.addEventListener('click', e => {
+                if (e.target.classList.contains('copy-channel-sub')) {
+                    const button = e.target;
+                    const link = button.dataset.link;
+                    navigator.clipboard.writeText(link).then(() => {
+                        button.textContent = 'Copied!';
+                        setTimeout(() => { button.textContent = 'Copy Sub'; }, 2000);
+                    });
+                }
            });
 
            configsTableBody.addEventListener('click', e => {
@@ -316,9 +347,11 @@
                channelStatsTableBody.innerHTML = '';
                sortedChannels.forEach(([channel, count]) => {
                    const row = document.createElement('tr');
+                   const subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/by-channel/${channel}.txt`;
                    row.innerHTML = `
                        <td><a href="https://t.me/s/${channel}" target="_blank">${channel}</a></td>
                        <td>${count}</td>
+                       <td><button class="copy-channel-sub" data-link="${subLink}">Copy Sub</button></td>
                    `;
                    channelStatsTableBody.appendChild(row);
                });
@@ -330,4 +363,3 @@
     </script>
 </body>
 </html>
-
