@@ -41,7 +41,7 @@ jobs:
 
       - name: 6. Run the Collector and Validator Script
         run: |
-          python v2ray_collector3.py
+          python v2ray_collector3.py scrape
 
       - name: 7. Commit and Push Changes
         run: |
