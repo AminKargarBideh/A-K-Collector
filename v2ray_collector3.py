@@ -13,6 +13,10 @@ import socket
 from pathlib import Path
 from typing import List, Set, Dict, Optional, TypedDict
 from bs4 import BeautifulSoup
+import sys
+import random
+from flask import Flask, jsonify, request, send_from_directory
+from waitress import serve
 # ===== CONFIGURATION & CONSTANTS =====
 # Directories and Files
 OUTPUT_DIR = Path("v2ray_configs")
@@ -402,8 +406,73 @@ def save_results(results: List[ValidatedConfig]):
         logging.info(f"Saved {len(configs)} configs for channel {channel} to {channel_file_path}")
 
 
+# ===== WEB SERVER =====
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    """Serves the main dashboard page."""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/validated_configs/<path:filename>')
+def serve_validated_configs(filename):
+    """
+    Serves static files from the validated_configs directory,
+    including subscription files in subdirectories.
+    """
+    return send_from_directory(VALIDATED_DIR, filename)
+
+@app.route('/api/generate_sub', methods=['GET'])
+def generate_sub():
+    """
+    Generates a custom subscription link based on user-defined criteria.
+    Params:
+        country (str): The full country name (e.g., "Germany").
+        protocol (str): The protocol name (e.g., "vless").
+        count (int): The number of configs to include.
+    """
+    country = request.args.get('country', default=None, type=str)
+    protocol = request.args.get('protocol', default=None, type=str)
+    count = request.args.get('count', default=10, type=int)
+
+    if not RESULTS_JSON_FILE.exists():
+        return jsonify({"error": "Results file not found. Please run the scraper first."}), 404
+
+    try:
+        with open(RESULTS_JSON_FILE, 'r', encoding='utf-8') as f:
+            all_configs = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return jsonify({"error": "Could not read or parse results file."}), 500
+
+
+    # Filter based on country
+    if country:
+        all_configs = [c for c in all_configs if c.get('country_name') == country]
+
+    # Filter based on protocol
+    if protocol:
+        all_configs = [c for c in all_configs if c.get('protocol') == protocol]
+        
+    if not all_configs:
+        # Return empty link instead of error to not break the UI
+        return jsonify({"subscription_link": "", "config_count": 0, "message": "No matching configs found."})
+
+    # Randomly select 'count' configs
+    num_to_select = min(count, len(all_configs))
+    selected_configs = random.sample(all_configs, num_to_select)
+
+    # Get the renamed_config or fallback to config
+    config_links = [c.get('renamed_config', c.get('config')) for c in selected_configs]
+
+    # Join and base64 encode for the subscription link
+    subscription_content = "\n".join(config_links)
+    encoded_subscription = base64.b64encode(subscription_content.encode('utf-8')).decode('utf-8')
+
+    return jsonify({"subscription_link": encoded_subscription, "config_count": len(selected_configs)})
+
+
 # ===== INITIALIZATION & STARTUP =====
-def main():
+def run_scraper():
     """Main function to orchestrate the scraping and validation process."""
     channels = load_channels(CHANNELS_FILE)
     if not channels:
@@ -486,5 +555,19 @@ def main():
 
 
 if __name__ == "__main__":
-
-    main()
+    if len(sys.argv) > 1 and sys.argv[1].lower() == 'scrape':
+        logging.info("--- Starting in SCRAPE mode ---")
+        run_scraper()
+        logging.info("--- Scrape complete ---")
+    else:
+        logging.info("--- Starting in WEB SERVER mode ---")
+        if not RESULTS_JSON_FILE.exists():
+            logging.warning("="*50)
+            logging.warning("WARNING: results.json not found!")
+            logging.warning("The dashboard may be empty.")
+            logging.warning("Run with 'python v2ray_collector3.py scrape' to generate it.")
+            logging.warning("="*50)
+        
+        logging.info("Serving dashboard at http://0.0.0.0:8080")
+        # Use waitress for a production-ready WSGI server on Windows
+        serve(app, host="0.0.0.0", port=8080)

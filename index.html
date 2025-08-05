@@ -85,7 +85,7 @@
 
         <article>
             <header>
-                <h2>Filter Configurations</h2>
+                <h2>Filter & Generate Configurations</h2>
                 <div class="grid">
                     <select id="country-select">
                         <option value="">Select a Country</option>
@@ -93,6 +93,10 @@
                     <select id="protocol-select">
                         <option value="">Select a Protocol</option>
                     </select>
+                </div>
+                <div class="grid" style="margin-top: 1rem;">
+                    <input type="number" id="config-count" name="config-count" placeholder="Number of configs (e.g., 20)" value="20">
+                    <button id="generate-sub-btn" aria-busy="false">Generate & Copy Link</button>
                 </div>
             </header>
 
@@ -121,22 +125,38 @@
             </footer>
         </article>
 
+            <div id="custom-sub-container" style="display: none; margin-top: 1rem;">
+               <h4 id="custom-sub-title" style="margin-bottom: 0.5rem;"></h4>
+               <div class="sub-container">
+                   <code id="custom-sub-link"></code>
+                   <button id="copy-custom-sub-btn" class="outline">Copy</button>
+               </div>
+            </div>
+
     </main>
 
         <script>
         document.addEventListener('DOMContentLoaded', () => {
             const API_URL = './validated_configs/results.json';
             const configsTableBody = document.querySelector('#configsTable tbody');
-           const statsContainer = document.getElementById('stats');
-           const lastUpdatedSpan = document.getElementById('lastUpdated');
-           const countrySelect = document.getElementById('country-select');
-           const protocolSelect = document.getElementById('protocol-select');
-           const subscriptionContainer = document.getElementById('subscription-container');
-           const subscriptionTitle = document.getElementById('subscription-title');
-           const subscriptionLinkElem = document.getElementById('subscription-link');
-           const copySubscriptionBtn = document.getElementById('copy-subscription-btn');
-           const configsContainer = document.getElementById('configs-container');
-           const channelStatsTableBody = document.querySelector('#channelStatsTable tbody');
+            const statsContainer = document.getElementById('stats');
+            const lastUpdatedSpan = document.getElementById('lastUpdated');
+            const countrySelect = document.getElementById('country-select');
+            const protocolSelect = document.getElementById('protocol-select');
+            const subscriptionContainer = document.getElementById('subscription-container');
+            const subscriptionTitle = document.getElementById('subscription-title');
+            const subscriptionLinkElem = document.getElementById('subscription-link');
+            const copySubscriptionBtn = document.getElementById('copy-subscription-btn');
+            const configsContainer = document.getElementById('configs-container');
+            const channelStatsTableBody = document.querySelector('#channelStatsTable tbody');
+            
+            // New Elements for Custom Subscription
+            const generateSubBtn = document.getElementById('generate-sub-btn');
+            const configCountInput = document.getElementById('config-count');
+            const customSubContainer = document.getElementById('custom-sub-container');
+            const customSubTitle = document.getElementById('custom-sub-title');
+            const customSubLinkElem = document.getElementById('custom-sub-link');
+            const copyCustomSubBtn = document.getElementById('copy-custom-sub-btn');
 
            let allConfigs = [];
            let countryChart, protocolChart;
@@ -144,15 +164,28 @@
            async function fetchData() {
                try {
                    const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                   if (!response.ok) {
+                       // If the main file is missing, the page is unusable.
+                       document.querySelector('main').innerHTML = `
+                           <article>
+                               <h2>Error</h2>
+                               <p>Could not load the configuration file (<code>${API_URL}</code>).</p>
+                               <p>Please make sure the scraper has been run successfully at least once.</p>
+                               <p>Run <code>python v2ray_collector3.py scrape</code> and then restart the web server.</p>
+                           </article>`;
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                   }
                    const data = await response.json();
                    
                    allConfigs = data;
                    
-                   const fileDate = new Date(response.headers.get("last-modified"));
+                   const fileDate = response.headers.get("last-modified") ? new Date(response.headers.get("last-modified")) : new Date();
                    lastUpdatedSpan.textContent = fileDate.toLocaleString();
                    
-                   populateDropdowns(allConfigs);
+                   // Initial population of dropdowns with all configs and then handle initial filter state
+                   updateCountryDropdown(allConfigs, countrySelect.value, protocolSelect.value);
+                   updateProtocolDropdown(allConfigs, countrySelect.value, protocolSelect.value);
+                   handleFilterChange(); // Call once to set initial state correctly
                    renderStats(allConfigs);
                    renderCharts(allConfigs);
                    renderChannelStats(allConfigs);
@@ -161,71 +194,96 @@
                }
            }
 
-           function populateDropdowns(configs) {
-               const countryCounts = configs.reduce((acc, c) => {
-                   acc[c.country_name] = (acc[c.country_name] || 0) + 1;
-                   return acc;
-               }, {});
-               const countries = Object.keys(countryCounts).sort();
-               
-               const protocolCounts = configs.reduce((acc, c) => {
-                   acc[c.protocol] = (acc[c.protocol] || 0) + 1;
-                   return acc;
-               }, {});
-               const protocols = Object.keys(protocolCounts).sort();
- 
-               countries.forEach(country => {
+           function updateCountryDropdown(currentConfigs, selectedCountry, selectedProtocol) {
+               countrySelect.innerHTML = '<option value="">Select a Country</option>'; // Always keep default option
+
+               const countryCounts = {};
+               currentConfigs.forEach(c => {
+                   // Calculate counts based on the *other* filter (selectedProtocol)
+                   if (!selectedProtocol || c.protocol === selectedProtocol) {
+                       countryCounts[c.country_name] = (countryCounts[c.country_name] || 0) + 1;
+                   }
+               });
+
+               const sortedCountries = Object.keys(countryCounts).sort();
+               sortedCountries.forEach(country => {
                    const option = document.createElement('option');
                    option.value = country;
                    option.textContent = `${country} (${countryCounts[country]})`;
                    countrySelect.appendChild(option);
                });
- 
-               protocols.forEach(protocol => {
+               countrySelect.value = selectedCountry; // Restore selection
+           }
+
+           function updateProtocolDropdown(currentConfigs, selectedCountry, selectedProtocol) {
+               protocolSelect.innerHTML = '<option value="">Select a Protocol</option>'; // Always keep default option
+
+               const protocolCounts = {};
+               currentConfigs.forEach(c => {
+                   // Calculate counts based on the *other* filter (selectedCountry)
+                   if (!selectedCountry || c.country_name === selectedCountry) {
+                       protocolCounts[c.protocol] = (protocolCounts[c.protocol] || 0) + 1;
+                   }
+               });
+
+               const sortedProtocols = Object.keys(protocolCounts).sort();
+               sortedProtocols.forEach(protocol => {
                    const option = document.createElement('option');
                    option.value = protocol;
                    option.textContent = `${protocol} (${protocolCounts[protocol]})`;
                    protocolSelect.appendChild(option);
                });
+               protocolSelect.value = selectedProtocol; // Restore selection
            }
-
+ 
            function handleFilterChange() {
                const selectedCountry = countrySelect.value;
                const selectedProtocol = protocolSelect.value;
 
+               // Update both dropdowns with counts reflecting the *other* filter
+               updateCountryDropdown(allConfigs, selectedCountry, selectedProtocol);
+               updateProtocolDropdown(allConfigs, selectedCountry, selectedProtocol);
+ 
+               // Determine the final set of configs to display in the table and generate subscription link
+               let finalFilteredConfigs = allConfigs;
+               if (selectedCountry) {
+                   finalFilteredConfigs = finalFilteredConfigs.filter(c => c.country_name === selectedCountry);
+               }
+               if (selectedProtocol) {
+                   finalFilteredConfigs = finalFilteredConfigs.filter(c => c.protocol === selectedProtocol);
+               }
+               
+               // Show/hide subscription link and configs table
                if (!selectedCountry && !selectedProtocol) {
                    subscriptionContainer.style.display = 'none';
                    configsContainer.style.display = 'none';
-                   return;
-               }
-
-               let filteredConfigs = allConfigs;
-               let title = 'Subscription Link for';
-               let subLink = '';
-
-               if (selectedCountry) {
-                   filteredConfigs = filteredConfigs.filter(c => c.country_name === selectedCountry);
-                   title += ` ${selectedCountry}`;
-                   const countryCode = allConfigs.find(c => c.country_name === selectedCountry)?.country_code;
-                   if (countryCode) {
-                       subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/by-country/${countryCode}.txt`;
+               } else {
+                   let title = 'Subscription Link for';
+                   let subLink = '';
+ 
+                   if (selectedCountry) {
+                       title += ` ${selectedCountry}`;
+                       const countryCode = allConfigs.find(c => c.country_name === selectedCountry)?.country_code;
+                       if (countryCode) {
+                           subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/by-country/${countryCode}.txt`;
+                       }
                    }
-               }
-
-               if (selectedProtocol) {
-                   filteredConfigs = filteredConfigs.filter(c => c.protocol === selectedProtocol);
-                   title += ` ${selectedProtocol}`;
-                    if (!selectedCountry) { // Only protocol is selected
-                       subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/${selectedProtocol}.txt`;
+ 
+                   if (selectedProtocol) {
+                       title += ` ${selectedProtocol}`;
+                       // If only protocol is selected, or if country filter is empty, use protocol-specific link
+                       if (!selectedCountry || (selectedCountry && !finalFilteredConfigs.some(c => c.country_name === selectedCountry))) {
+                           subLink = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/validated_configs/${selectedProtocol}.txt`;
+                       }
                    }
+                   
+                   subscriptionTitle.textContent = title;
+                   subscriptionLinkElem.textContent = subLink;
+                   subscriptionContainer.style.display = 'block';
+                   configsContainer.style.display = 'block';
                }
-
-               subscriptionTitle.textContent = title;
-               subscriptionLinkElem.textContent = subLink;
-               subscriptionContainer.style.display = 'block';
-
-               renderTable(filteredConfigs);
-               configsContainer.style.display = 'block';
+ 
+               renderTable(finalFilteredConfigs);
            }
 
            function renderTable(configs) {
@@ -254,22 +312,50 @@
            countrySelect.addEventListener('change', handleFilterChange);
            protocolSelect.addEventListener('change', handleFilterChange);
 
+           function copyToClipboard(text, buttonElement) {
+               if (navigator.clipboard && navigator.clipboard.writeText) {
+                   navigator.clipboard.writeText(text).then(() => {
+                       const originalText = buttonElement.textContent;
+                       buttonElement.textContent = 'Copied!';
+                       setTimeout(() => { buttonElement.textContent = originalText; }, 2000);
+                   }).catch(err => {
+                       console.error('Failed to copy using clipboard API:', err);
+                       fallbackCopyToClipboard(text, buttonElement);
+                   });
+               } else {
+                   fallbackCopyToClipboard(text, buttonElement);
+               }
+           }
+
+           function fallbackCopyToClipboard(text, buttonElement) {
+               const textArea = document.createElement("textarea");
+               textArea.value = text;
+               textArea.style.position = "fixed";  // Avoid scrolling to bottom
+               textArea.style.left = "-9999px"; // Move outside the screen
+               document.body.appendChild(textArea);
+               textArea.focus();
+               textArea.select();
+               try {
+                   document.execCommand('copy');
+                   const originalText = buttonElement.textContent;
+                   buttonElement.textContent = 'Copied!';
+                   setTimeout(() => { buttonElement.textContent = originalText; }, 2000);
+               } catch (err) {
+                   console.error('Fallback: Oops, unable to copy', err);
+                   alert("Failed to copy. Please copy the link manually: " + text);
+               }
+               document.body.removeChild(textArea);
+           }
+
            copySubscriptionBtn.addEventListener('click', () => {
-               navigator.clipboard.writeText(subscriptionLinkElem.textContent).then(() => {
-                   const originalText = copySubscriptionBtn.textContent;
-                   copySubscriptionBtn.textContent = 'Copied!';
-                   setTimeout(() => { copySubscriptionBtn.textContent = 'Copy'; }, 2000);
-               });
+               copyToClipboard(subscriptionLinkElem.textContent, copySubscriptionBtn);
            });
 
            channelStatsTableBody.addEventListener('click', e => {
                 if (e.target.classList.contains('copy-channel-sub')) {
                     const button = e.target;
                     const link = button.dataset.link;
-                    navigator.clipboard.writeText(link).then(() => {
-                        button.textContent = 'Copied!';
-                        setTimeout(() => { button.textContent = 'Copy Sub'; }, 2000);
-                    });
+                    copyToClipboard(link, button);
                 }
            });
 
@@ -277,12 +363,65 @@
                if (e.target.classList.contains('copy-btn')) {
                    const button = e.target;
                    const configStr = button.dataset.config;
-                   navigator.clipboard.writeText(configStr).then(() => {
-                       button.textContent = 'Copied!';
-                       setTimeout(() => { button.textContent = 'Copy Config'; }, 2000);
-                   });
+                   copyToClipboard(configStr, button);
                }
            });
+
+           // --- Custom Subscription Generator Logic ---
+           async function generateCustomSubscription() {
+               const country = countrySelect.value;
+               const protocol = protocolSelect.value;
+               const count = configCountInput.value || 20;
+
+               // Show loading state
+               generateSubBtn.setAttribute('aria-busy', 'true');
+               generateSubBtn.disabled = true;
+
+               const params = new URLSearchParams();
+               if (country) params.append('country', country);
+               if (protocol) params.append('protocol', protocol);
+               params.append('count', count);
+
+               try {
+                   const response = await fetch(`/api/generate_sub?${params.toString()}`);
+                   if (!response.ok) {
+                       const errorData = await response.json();
+                       throw new Error(errorData.error || 'Failed to generate subscription.');
+                   }
+                   const data = await response.json();
+                   
+                   if(data.subscription_link) {
+                       customSubLinkElem.textContent = data.subscription_link;
+                       customSubTitle.textContent = `Generated link with ${data.config_count} configs.`;
+                       customSubContainer.style.display = 'block';
+                       // Auto-copy to clipboard
+                       copyToClipboard(data.subscription_link, generateSubBtn);
+                   } else {
+                       customSubTitle.textContent = data.message || "No configs found for the selected criteria.";
+                       customSubLinkElem.textContent = '';
+                       customSubContainer.style.display = 'block';
+                   }
+
+               } catch (error) {
+                   customSubTitle.textContent = `Error: ${error.message}`;
+                   customSubLinkElem.textContent = '';
+                   customSubContainer.style.display = 'block';
+                   console.error("Custom subscription error:", error);
+               } finally {
+                   // Hide loading state
+                   generateSubBtn.setAttribute('aria-busy', 'false');
+                   generateSubBtn.disabled = false;
+               }
+           }
+
+           copyCustomSubBtn.addEventListener('click', () => {
+               navigator.clipboard.writeText(customSubLinkElem.textContent).then(() => {
+                   copyCustomSubBtn.textContent = 'Copied!';
+                   setTimeout(() => { copyCustomSubBtn.textContent = 'Copy'; }, 2000);
+               });
+           });
+
+           generateSubBtn.addEventListener('click', generateCustomSubscription);
 
            const themeToggle = document.getElementById('theme-toggle');
            
