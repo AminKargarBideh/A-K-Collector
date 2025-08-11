@@ -99,7 +99,6 @@
                     <button id="generate-sub-btn" aria-busy="false">Generate & Copy Link</button>
                 </div>
             </header>
-
             <div id="subscription-container" style="display: none; margin-bottom: 1rem;">
                 <h4 id="subscription-title" style="margin-bottom: 0.5rem;"></h4>
                 <div class="sub-container">
@@ -107,7 +106,14 @@
                     <button id="copy-subscription-btn" class="outline">Copy</button>
                 </div>
             </div>
-
+            <div id="custom-sub-container" style="display: none; margin-bottom: 1rem;">
+                 <h4 id="custom-sub-title" style="margin-bottom: 0.5rem;"></h4>
+                 <div class="sub-container">
+                     <code id="custom-sub-link"></code>
+                     <button id="copy-custom-sub-btn" class="outline">Copy</button>
+                 </div>
+            </div>
+ 
             <div id="configs-container" style="display: none;">
                 <h2>Available Configurations</h2>
                 <div style="overflow-x: auto;">
@@ -119,23 +125,15 @@
                     </table>
                 </div>
             </div>
-
+ 
             <footer>
                 <p>Last updated: <span id="lastUpdated"></span></p>
             </footer>
         </article>
-
-            <div id="custom-sub-container" style="display: none; margin-top: 1rem;">
-               <h4 id="custom-sub-title" style="margin-bottom: 0.5rem;"></h4>
-               <div class="sub-container">
-                   <code id="custom-sub-link"></code>
-                   <button id="copy-custom-sub-btn" class="outline">Copy</button>
-               </div>
-            </div>
-
-    </main>
-
-        <script>
+ 
+     </main>
+ 
+         <script>
         document.addEventListener('DOMContentLoaded', () => {
             const API_URL = './validated_configs/results.json';
             const configsTableBody = document.querySelector('#configsTable tbody');
@@ -149,8 +147,6 @@
             const copySubscriptionBtn = document.getElementById('copy-subscription-btn');
             const configsContainer = document.getElementById('configs-container');
             const channelStatsTableBody = document.querySelector('#channelStatsTable tbody');
-            
-            // New Elements for Custom Subscription
             const generateSubBtn = document.getElementById('generate-sub-btn');
             const configCountInput = document.getElementById('config-count');
             const customSubContainer = document.getElementById('custom-sub-container');
@@ -347,10 +343,11 @@
                document.body.removeChild(textArea);
            }
 
-           copySubscriptionBtn.addEventListener('click', () => {
-               copyToClipboard(subscriptionLinkElem.textContent, copySubscriptionBtn);
-           });
 
+           copySubscriptionBtn.addEventListener('click', () => {
+                copyToClipboard(subscriptionLinkElem.textContent, copySubscriptionBtn);
+           });
+ 
            channelStatsTableBody.addEventListener('click', e => {
                 if (e.target.classList.contains('copy-channel-sub')) {
                     const button = e.target;
@@ -371,33 +368,52 @@
            async function generateCustomSubscription() {
                const country = countrySelect.value;
                const protocol = protocolSelect.value;
-               const count = configCountInput.value || 20;
+               const count = parseInt(configCountInput.value) || 20; // Ensure count is an integer
 
                // Show loading state
                generateSubBtn.setAttribute('aria-busy', 'true');
                generateSubBtn.disabled = true;
 
-               const params = new URLSearchParams();
-               if (country) params.append('country', country);
-               if (protocol) params.append('protocol', protocol);
-               params.append('count', count);
-
                try {
-                   const response = await fetch(`/api/generate_sub?${params.toString()}`);
-                   if (!response.ok) {
-                       const errorData = await response.json();
-                       throw new Error(errorData.error || 'Failed to generate subscription.');
+                   let filteredConfigs = allConfigs;
+
+                   // Apply country filter
+                   if (country) {
+                       filteredConfigs = filteredConfigs.filter(c => c.country_name === country);
                    }
-                   const data = await response.json();
+
+                   // Apply protocol filter
+                   if (protocol) {
+                       filteredConfigs = filteredConfigs.filter(c => c.protocol === protocol);
+                   }
                    
-                   if(data.subscription_link) {
-                       customSubLinkElem.textContent = data.subscription_link;
-                       customSubTitle.textContent = `Generated link with ${data.config_count} configs.`;
+                   let selectedConfigs = [];
+                   if (filteredConfigs.length > 0) {
+                       // Randomly select 'count' configs
+                       const numToSelect = Math.min(count, filteredConfigs.length);
+                       // Shuffle array and pick top 'numToSelect'
+                       selectedConfigs = filteredConfigs
+                           .map(value => ({ value, sort: Math.random() }))
+                           .sort((a, b) => a.sort - b.sort)
+                           .map(({ value }) => value)
+                           .slice(0, numToSelect);
+                   }
+
+                   if (selectedConfigs.length > 0) {
+                       // Get the renamed_config or fallback to config
+                       const configLinks = selectedConfigs.map(c => c.renamed_config || c.config);
+                       
+                       // Join and base64 encode for the subscription link
+                       const subscriptionContent = configLinks.join('\n');
+                       const encodedSubscription = btoa(unescape(encodeURIComponent(subscriptionContent))); // Base64 encode
+
+                       customSubLinkElem.textContent = encodedSubscription;
+                       customSubTitle.textContent = `Generated link with ${selectedConfigs.length} configs.`;
                        customSubContainer.style.display = 'block';
                        // Auto-copy to clipboard
-                       copyToClipboard(data.subscription_link, generateSubBtn);
+                       copyToClipboard(encodedSubscription, generateSubBtn);
                    } else {
-                       customSubTitle.textContent = data.message || "No configs found for the selected criteria.";
+                       customSubTitle.textContent = "No matching configs found.";
                        customSubLinkElem.textContent = '';
                        customSubContainer.style.display = 'block';
                    }
@@ -414,29 +430,27 @@
                }
            }
 
-           copyCustomSubBtn.addEventListener('click', () => {
-               navigator.clipboard.writeText(customSubLinkElem.textContent).then(() => {
-                   copyCustomSubBtn.textContent = 'Copied!';
-                   setTimeout(() => { copyCustomSubBtn.textContent = 'Copy'; }, 2000);
-               });
-           });
+          generateSubBtn.addEventListener('click', generateCustomSubscription);
 
-           generateSubBtn.addEventListener('click', generateCustomSubscription);
+          copyCustomSubBtn.addEventListener('click', () => {
+              copyToClipboard(customSubLinkElem.textContent, copyCustomSubBtn);
+          });
 
-           const themeToggle = document.getElementById('theme-toggle');
-           
-           function setTheme(isDark) {
-               document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-               themeToggle.checked = isDark;
-           }
+          // Move theme toggle logic inside DOMContentLoaded
+          const themeToggle = document.getElementById('theme-toggle');
+          
+          function setTheme(isDark) {
+              document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+              themeToggle.checked = isDark;
+          }
 
-           themeToggle.addEventListener('change', () => {
-               setTheme(themeToggle.checked);
-           });
+          themeToggle.addEventListener('change', () => {
+              setTheme(themeToggle.checked);
+          });
 
-           // Set initial theme based on system preference
-           const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-           setTheme(prefersDark);
+          // Set initial theme based on system preference
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          setTheme(prefersDark);
 
             // Chart and Stat rendering functions
             function renderStats(configs) {
