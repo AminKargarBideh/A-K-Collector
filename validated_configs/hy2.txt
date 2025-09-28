@@ -1,5 +1,5 @@
 hy2://61308bc8-ea8c-4792-8727-6d18c282a2db@dg1.xiaohuolongjc.top:37771/?insecure=1&sni=dg1.xiaohuolongjc.top#US-ReliableSite.Net-HY2
 hy2://84123645-b62d-4a3b-bd74-d58ea4023c65@hk2.jueduibupao.top:44507/?insecure=1&sni=hk2.jueduibupao.top#HK-MoeChuang-HY2
-hy2://16461a78-363c-457a-92f9-83b0a68edc37@zp1.eyucdn.xyz:2056/?insecure=1&sni=zp1.eyujichang.xyz#JP-Datacamp-HY2
 hy2://16461a78-363c-457a-92f9-83b0a68edc37@sg3.eyucdn.xyz:2056/?insecure=1&sni=sg3.eyucdn.xyz#SG-Datacamp-HY2
+hy2://16461a78-363c-457a-92f9-83b0a68edc37@zp1.eyucdn.xyz:2056/?insecure=1&sni=zp1.eyujichang.xyz#JP-Datacamp-HY2
 hy2://84123645-b62d-4a3b-bd74-d58ea4023c65@tw2.jueduibupao.top:30078/?insecure=1&sni=tw2.jueduibupao.top#TW-Chunghwa-HY2
