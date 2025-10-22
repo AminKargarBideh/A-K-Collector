@@ -1,6 +1,4 @@
-hy2://2429bee3-e0c1-47dd-b420-75e6512b184b@40.233.71.37:30300/?insecure=1&sni=www.bing.com#CA-Oracle-HY2
-hy2://c85c5422-97a7-4e9a-a9dc-6e16d474fe8c@hg1.xiaohuolongjc.top:37771/?insecure=1&sni=hg1.xiaohuolongjc.top#HK-WAP.AC-HY2
-hy2://84123645-b62d-4a3b-bd74-d58ea4023c65@hk2.jueduibupao.top:44507/?insecure=1&sni=hk2.jueduibupao.top#HK-G-Core-HY2
-hy2://16461a78-363c-457a-92f9-83b0a68edc37@sg3.eyucdn.xyz:2056/?insecure=1&sni=sg3.eyucdn.xyz#SG-Datacamp-HY2
 hy2://16461a78-363c-457a-92f9-83b0a68edc37@zp1.eyucdn.xyz:2056/?insecure=1&sni=zp1.eyujichang.xyz#JP-Datacamp-HY2
+hy2://16461a78-363c-457a-92f9-83b0a68edc37@sg3.eyucdn.xyz:2056/?insecure=1&sni=sg3.eyucdn.xyz#SG-Datacamp-HY2
+hy2://84123645-b62d-4a3b-bd74-d58ea4023c65@hk2.jueduibupao.top:44507/?insecure=1&sni=hk2.jueduibupao.top#HK-G-Core-HY2
 hy2://84123645-b62d-4a3b-bd74-d58ea4023c65@tw2.jueduibupao.top:30078/?insecure=1&sni=tw2.jueduibupao.top#TW-Chunghwa-HY2
