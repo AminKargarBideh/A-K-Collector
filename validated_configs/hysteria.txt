@@ -1,2 +1,2 @@
-hysteria://62.210.10.186:35511?alpn=h3&auth=dongtaiwang.com&downmbps=55&protocol=udp&insecure=1&udp=true&upmbps=11&peer=apple.com#FR-Online-HYSTERIA
 hysteria://51.159.226.1:49003?alpn=h3&auth=dongtaiwang.com&downmbps=55&protocol=udp&insecure=1&udp=true&upmbps=11&peer=apple.com#NL-SCALEWAY-HYSTERIA
+hysteria://62.210.10.186:35511?alpn=h3&auth=dongtaiwang.com&downmbps=55&protocol=udp&insecure=1&udp=true&upmbps=11&peer=apple.com#FR-Online-HYSTERIA
