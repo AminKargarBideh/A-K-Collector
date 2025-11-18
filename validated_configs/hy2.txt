@@ -1,7 +1,10 @@
-hy2://9772ecf2-6732-4bfb-a8b1-f48af577c76c@113.192.61.19:63979?insecure=1&sni=www.bing.com#US-Easy-HY2
-hy2://338ce171-d764-4610-8fd5-6688b0d321f0@144.22.187.105:30102?insecure=1#BR-Oracle-HY2
-hy2://9772ecf2-6732-4bfb-a8b1-f48af577c76c@113.192.61.19:63979?insecure=1&sni=www.bing.com#US-Easy-HY2
-hy2://338ce171-d764-4610-8fd5-6688b0d321f0@144.22.187.105:30102?insecure=1#BR-Oracle-HY2
-hy2://c232f411-96b5-4b07-b2f7-66a434725ffb@193.142.59.41:23899?insecure=1&sni=hl01.mistea.top#GB-Hostshield-HY2
+hy2://7daa4a7f-f76e-4941-84bd-c6004cdbb859@94.249.197.95:30000/?insecure=1&sni=bing.com#NL-Tech-HY2
+hy2://91bf574a-4a2f-42eb-bfa9-5824317f541c@node.waifly.com:28132/?insecure=1&sni=example.com&obfs=salamander&obfs-password=09fdd186-3d5b-482a-a7b6-285cc88a38c8#FR-Geniusweer-HY2
+hy2://341e05a4-aa65-480c-82d2-02e8070e236b@fi5.bot-hosting.net:20800/?insecure=1&sni=example.com&obfs=salamander&obfs-password=2a837ccb-3cdb-43d2-bd4a-640e2bb2b0d1#FI-Hetzner-HY2
 hy2://338ce171-d764-4610-8fd5-6688b0d321f0@132.226.162.10:30102?insecure=1#BR-Oracle-HY2
+hy2://9772ecf2-6732-4bfb-a8b1-f48af577c76c@113.192.61.19:63979?insecure=1&sni=www.bing.com#US-Easy-HY2
 hy2://c232f411-96b5-4b07-b2f7-66a434725ffb@193.142.59.41:23899?insecure=1&sni=hl01.mistea.top#GB-Hostshield-HY2
+hy2://9772ecf2-6732-4bfb-a8b1-f48af577c76c@113.192.61.19:63979?insecure=1&sni=www.bing.com#US-Easy-HY2
+hy2://338ce171-d764-4610-8fd5-6688b0d321f0@144.22.187.105:30102?insecure=1#BR-Oracle-HY2
+hy2://c232f411-96b5-4b07-b2f7-66a434725ffb@193.142.59.41:23899?insecure=1&sni=hl01.mistea.top#GB-Hostshield-HY2
+hy2://338ce171-d764-4610-8fd5-6688b0d321f0@144.22.187.105:30102?insecure=1#BR-Oracle-HY2
