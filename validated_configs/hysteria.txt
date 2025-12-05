@@ -1,1 +1,1 @@
-hysteria://62.210.10.186:50011?alpn=h3&auth=dongtaiwang.com&auth_str=dongtaiwang.com&downmbps=55 Mbps&protocol=udp&insecure=1&peer=#FR-Online-HYSTERIA
+hysteria://51.159.226.1:49003?alpn=h3&auth_str=dongtaiwang.com&downmbps=55&obfsParam=&protocol=udp&insecure=1&peer=apple.com&upmbps=11#NL-SCALEWAY-HYSTERIA
