@@ -1,2 +1,2 @@
-hysteria://62.210.196.68:26691?alpn=h3&auth=dongtaiwang.com&downmbps=55 Mbps&protocol=udp&insecure=1&peer=#FR-Online-HYSTERIA
+hysteria://62.210.196.68:26691?alpn=h3&auth=dongtaiwang.com&downmbps=55 Mbps&protocol=udp&insecure=1&peer=#N/A-Unknown-HYSTERIA
 hysteria://195.154.200.40:15010/?insecure=1&peer=apple.com&auth=dongtaiwang.com&upmbps=100&downmbps=100&alpn=h3#FR-Online-HYSTERIA
