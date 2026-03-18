@@ -1,2 +1,1 @@
-hysteria://208.87.243.151:38845?alpn=h3&auth=dongtaiwang.com&downmbps=55 Mbps&protocol=udp&insecure=1&udp=true&upmbps=11 Mbps&peer=#US-Psychz-HYSTERIA
 hysteria://195.154.200.40:15010/?insecure=1&peer=apple.com&auth=dongtaiwang.com&upmbps=100&downmbps=100&alpn=h3#FR-Online-HYSTERIA
