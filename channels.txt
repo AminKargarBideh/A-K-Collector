@@ -73,7 +73,8 @@ filterk0sh
 fnet00  
 foxnt  
 freakconfig  
-free_vpn02  
+free_vpn02
+persianvpnhub
 freeconnection_vpn  
 freedom_config  
 freev2rng  
