@@ -1,8 +1,8 @@
-hy2://4eee1b74-f71e-4c88-ac26-9eec362e40d1@hkt1.nekohub.xyz:20007/?insecure=1&sni=www.bing.com#HK-Hong-HY2
-hy2://H7mP2xY9kJ4nQ8wR5tF6vB3z@202.146.222.89:443/?insecure=1#HK-CTG-HY2
 hy2://53f193c4-6482-45fb-8e00-60e0baf016ee@207.56.227.226:48920/?insecure=1&sni=www.bing.com#JP-JT-HY2
-hy2://6aab8efdf13945829ae3699c342be406@fiproxy1.lockdwn.com:443/?sni=fiproxy1.lockdwn.com&obfs=salamander&obfs-password=uw9b2qq5rx#FI-Play2go-HY2
-hy2://553e3253-c454-431d-a7e6-42bc06ea5e14@srvhy1.ezcon24.online:8443/?insecure=1&sni=srvhy1.ezcon24.online#DE-SERV.HOST-HY2
 hy2://22d891f5-ad85-4824-b0b8-e30cf3d37eb5@lsj1.mangshe.xyz:2056/?insecure=1&sni=lsj1.mangshe.xyz#DK-Baxet-HY2
 hy2://22d891f5-ad85-4824-b0b8-e30cf3d37eb5@yg3.mangshe.xyz:2056/?insecure=1&sni=yg3.mangshe.xyz#GB-Datacamp-HY2
 hy2://ec19e705-c8fe-4e9c-8cbe-c47038da0620@hk1.ktmhyld.com:18385/?insecure=1#N/A-Unknown-HY2
+hy2://H7mP2xY9kJ4nQ8wR5tF6vB3z@202.146.222.89:443/?insecure=1#HK-CTG-HY2
+hy2://4eee1b74-f71e-4c88-ac26-9eec362e40d1@hkt1.nekohub.xyz:20007/?insecure=1&sni=www.bing.com#HK-Hong-HY2
+hy2://553e3253-c454-431d-a7e6-42bc06ea5e14@srvhy1.ezcon24.online:8443/?insecure=1&sni=srvhy1.ezcon24.online#DE-SERV.HOST-HY2
+hy2://6aab8efdf13945829ae3699c342be406@fiproxy1.lockdwn.com:443/?sni=fiproxy1.lockdwn.com&obfs=salamander&obfs-password=uw9b2qq5rx#FI-Play2go-HY2
