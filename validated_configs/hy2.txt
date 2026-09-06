@@ -1,2 +1,2 @@
-hy2://184cdec28da5a09450803c8debcd2cc9@138.3.208.26:50160/?insecure=1&sni=www.bing.com#JP-Oracle-HY2
 hy2://dffb4c3d-1e84-4938-8881-cad917e8efb2@de1.apexvpn.space:443/?sni=de1.apexvpn.space#DE-PLAY2GO-HY2
+hy2://184cdec28da5a09450803c8debcd2cc9@138.3.208.26:50160/?insecure=1&sni=www.bing.com#JP-Oracle-HY2
