@@ -1,1 +1,1 @@
-hysteria://5.83.129.153:20088?alpn=h3&auth_str=dongtaiwang.com&downmbps=1000&insecure=1&peer=apple.com&udp=true&upmbps=500#DE-TAKEHOST-HYSTERIA
+hysteria://62.210.70.191:24667?alpn=h3&auth=dongtaiwang.com&downmbps=55 Mbps&protocol=udp&insecure=1&peer=#FR-Scaleway-HYSTERIA
