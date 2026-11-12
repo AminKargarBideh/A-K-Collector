@@ -1,2 +1,2 @@
-hysteria://5.83.129.90:54177?alpn=h3&auth=dongtaiwang.com&auth_str=dongtaiwang.com&downmbps=1000&protocol=udp&insecure=1&peer=apple.com&upmbps=500#DE-TAKEHOST-HYSTERIA
 hysteria://198.200.57.142:22335?alpn=h3&auth=github.com/Alvin9999-newpac/fanqiang&downmbps=55&password=github.com%2FAlvin9999-newpac%2Ffanqiang&servername=bing.com&insecure=1&peer=bing.com&upmbps=11#US-PEG-HYSTERIA
+hysteria://5.83.129.90:54177?alpn=h3&auth=dongtaiwang.com&auth_str=dongtaiwang.com&downmbps=1000&protocol=udp&insecure=1&peer=apple.com&upmbps=500#DE-TAKEHOST-HYSTERIA
